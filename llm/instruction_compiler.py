@@ -25,7 +25,6 @@ def translate_command_to_instructions(user_command, state_data):
 
     # Get the assistant's reply
     assistant_reply = extract_json_from_string(response.choices[0].message.content)
-
     # Attempt to parse the reply as JSON
     try:
         instructions = json.loads(assistant_reply)

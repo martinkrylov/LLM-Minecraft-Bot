@@ -27,6 +27,7 @@ Your Task:
 
    - Use concise and direct language for each sub-task.
    - Begin each instruction with an action verb (e.g., "Collect," "Craft," "Move to").
+   - **Be specific with block names**: Anytime a block is referenced, ensure that the exact name of the block is used (e.g., "oak_log" instead of "wood" or "stone_bricks" instead of "bricks").
    - Include necessary details such as item names, coordinates, or entity types in your instructions.
 
 6. **Output Format**:
@@ -36,6 +37,14 @@ Your Task:
 
 ---
 
+**Bot State Information**:
+
+The bot receives state data that includes:
+
+- **Bot Name**: The current username of the bot (`botName`).
+- **Position**: The bot's current coordinates (`x`, `y`, `z`).
+- **Health**: The bot's current health level.
+- **Inventory**: A list of items currently in the bot’s inventory, with each item specifying its name, count, and slot.
 """
 
 compiler_prompt = """
@@ -46,6 +55,8 @@ Your Task:
 Translate each sub-task from the plan into the appropriate API method calls.
 Ensure that each instruction uses the correct method and includes all required parameters.
 Maintain the sequence of actions to preserve the plan's logic.
+**Be specific with block names**: Anytime a block is referenced, ensure that the exact name of the block is used (e.g., "oak_log" instead of "wood" or "stone_bricks" instead of "bricks").
+
 Available methods and their required parameters are:
 
 travel_to
@@ -54,18 +65,16 @@ Parameters:
 "y": The Y-coordinate to travel to (integer).
 "z": The Z-coordinate to travel to (integer).
 
-
 mine_block
 Parameters:
 "x": The X-coordinate of the block to mine (integer).
 "y": The Y-coordinate of the block to mine (integer).
 "z": The Z-coordinate of the block to mine (integer).
-
+- **Note**: Each block to be mined requires a separate call of the `mine_block` function.
 
 craft_item
 Parameters:
 "item_name": The name of the item to craft (string).
-
 
 use_block
 Parameters:
@@ -73,11 +82,9 @@ Parameters:
 "y": The Y-coordinate of the block to use (integer).
 "z": The Z-coordinate of the block to use (integer).
 
-
 drop_item
 Parameters:
 "item_name": The name of the item to drop from the inventory (string).
-
 
 place_block
 Parameters:
@@ -86,19 +93,27 @@ Parameters:
 "y": The Y-coordinate where the block will be placed (integer).
 "z": The Z-coordinate where the block will be placed (integer).
 
-
 mine_resource
 Parameters:
 "block_name": The name of the block type to find and mine (string).
 "max_distance" (optional): The maximum distance to search for the block (integer, default is 64).
 
-
 kill_entity
 Parameters:
 "entity_type": The type of entity to attack (string, e.g., "zombie", "cow").
+
 Output Format:
 
 The output should be in JSON format, with each instruction represented as an object containing "method" and "parameters" keys.
 
+---
 
+Bot State Information:
+
+The bot receives state data that includes:
+
+Bot Name: The current username of the bot (botName).
+Position: The bot's current coordinates (x, y, z).
+Health: The bot's current health level.
+Inventory: A list of items currently in the bot’s inventory, with each item specifying its name, count, and slot.
 """

@@ -34,7 +34,7 @@ const authorizedUsers = ['Magic_karp24', 'martin874183']; // Replace with your M
 
 // Create the bot with updated username and port
 bot = mineflayer.createBot({
-  host: 'localhost',             // Replace with your server IP if different
+  host: '11.20.16.131',             // Replace with your server IP if different
   port: 7754,                    // Updated server port
   username: 'Skibidii-Gyatt',    // Updated bot username
   // Additional options can be added here if needed
@@ -62,7 +62,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = process.env.PORT || 5001; // Use port from .env or default to 5001
+    const PORT = 3000//process.env.PORT || 5001; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
@@ -491,9 +491,9 @@ app.get('/state_data', (req, res) => {
   const stateData = {
     botName: bot.username,
     position: {
-      x: bot.entity.position.x,
-      y: bot.entity.position.y,
-      z: bot.entity.position.z
+      x: Math.round(bot.entity.position.x), // Rounding the x position
+      y: Math.round(bot.entity.position.y), // Rounding the y position
+      z: Math.round(bot.entity.position.z)  // Rounding the z position
     },
     health: bot.health,
     inventory: bot.inventory.items().map(item => ({
