@@ -1,8 +1,33 @@
-import openai
+from openai import OpenAI
+import json
 import dotenv
 import os
+from llm.utils import extract_json_from_string
+from llm.prompts import parser_prompt
 
 dotenv.load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
 
 def parse_prompt(prompt):
+    # Message
+    messages = [
+        {"role": "system", "content": parser_prompt},
+        {"role": "user", "content": prompt}
+    ]
+    # Call the OpenAI API
+    response = client.chat.completions.create(
+        model=os.getenv("OPENAI_MODEL"),
+        messages=messages,
+        max_tokens=200,
+        temperature=0.7,
+    )
+
+    # Access the content of the message
+    assistant_reply_content = extract_json_from_string(response.choices[0].message.content)
+    # Attempt to parse the reply as JSON
+    try:
+        instructions = json.loads(assistant_reply_content)
+        return instructions
+    except json.JSONDecodeError:
+        print("Failed to parse the assistant's reply as JSON.")
+        return None

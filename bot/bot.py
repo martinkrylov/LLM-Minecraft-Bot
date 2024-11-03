@@ -35,6 +35,7 @@ class MineflayerBotWrapper:
         try:
             print('mine payload:', payload)
             response = requests.post(f"{self.api_url}/mine", json=payload, headers=self.headers)
+            print(response)
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:

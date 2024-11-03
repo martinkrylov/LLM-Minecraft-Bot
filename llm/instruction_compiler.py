@@ -2,7 +2,8 @@ from openai import OpenAI
 import json
 import dotenv
 import os
-from prompts import compiler_prompt
+from llm.utils import extract_json_from_string
+from llm.prompts import compiler_prompt
 
 dotenv.load_dotenv()
 client = OpenAI()
@@ -22,7 +23,7 @@ def translate_command_to_instructions(user_command):
     )
 
     # Get the assistant's reply
-    assistant_reply = response['choices'][0]['message']['content']
+    assistant_reply = extract_json_from_string(response.choices[0].message.content)
 
     # Attempt to parse the reply as JSON
     try:
@@ -31,9 +32,3 @@ def translate_command_to_instructions(user_command):
     except json.JSONDecodeError:
         print("Failed to parse the assistant's reply as JSON.")
         return None
-
-# Example usage
-if __name__ == "__main__":
-    user_command = "Find some iron ore and smelt it into iron ingots."
-    instructions = translate_command_to_instructions(user_command)
-    print(json.dumps(instructions, indent=2))
