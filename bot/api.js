@@ -7,6 +7,9 @@ const app = express();
 
 const winston = require('winston'); // For logging
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Use express.json() middleware to parse JSON request bodies
 app.use(express.json());
 
@@ -35,8 +38,8 @@ const authorizedUsers = ['Magic_karp24']; // Replace with your Minecraft usernam
 // Create the bot with updated username and port
 bot = mineflayer.createBot({
   host: 'localhost',             // Replace with your server IP if different
-  port: 7754,                    // Updated server port
-  username: 'Skibidii-Gyatt',    // Updated bot username
+  port: process.env.SERVER_PORT,                    // Updated server port
+  username: process.env.USERNAME,    // Updated bot username
   // Additional options can be added here if needed
 });
 
@@ -62,7 +65,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = process.env.PORT || 5001; // Changed port to 5001 to avoid conflicts
+    const PORT = process.env.API_PORT || 3000; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
