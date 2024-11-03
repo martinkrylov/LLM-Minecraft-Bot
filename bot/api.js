@@ -62,7 +62,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = process.env.PORT || 3000; // Use port from .env or default to 5001
+    const PORT = process.env.PORT || 5001; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
@@ -222,15 +222,47 @@ async function craftItem(itemName) {
         return;
       }
   
-      const itemId = mcData.itemsByName[itemName]?.id;
-      if (!itemId) {
+      const item = mcData.itemsByName[itemName];
+      if (!item) {
         bot.chat(`Item "${itemName}" does not exist.`);
         logger.info(`Attempted to craft "${itemName}", but it does not exist.`);
         return;
       }
   
-      // Check if a crafting table is required for the recipe
-      const recipes = bot.recipesFor(itemId, null, 1);
+      const itemId = item.id;
+  
+      // Check for recipes without a crafting table first
+      let recipes = bot.recipesFor(itemId, null, 1, null);
+  
+      // If no recipe is found without a crafting table, search for a crafting table nearby
+      let craftingTableBlock = null;
+      if (recipes.length === 0) {
+        const craftingTablePosition = getBlockCoordinates('crafting_table', 64);
+  
+        if (!craftingTablePosition) {
+          bot.chat("No crafting table nearby.");
+          logger.info("Crafting table not found nearby.");
+          return;
+        }
+  
+        // Move to the crafting table and get the block instance
+        await travelToCoordinates(craftingTablePosition.x - 1, craftingTablePosition.y, craftingTablePosition.z - 1);
+        craftingTableBlock = bot.blockAt(craftingTablePosition);
+  
+        // Ensure the bot is close enough to the crafting table
+        if (bot.entity.position.distanceTo(craftingTableBlock.position) > 3) {
+          bot.chat("Cannot reach the crafting table.");
+          logger.info("Cannot reach the crafting table.");
+          return;
+        }
+  
+        await bot.lookAt(craftingTableBlock.position.offset(0.5, 1, 0.5));
+  
+        // Get recipes that require a crafting table
+        recipes = bot.recipesFor(itemId, null, 1, craftingTableBlock);
+      }
+  
+      // If still no recipe is found even with a crafting table, exit
       if (recipes.length === 0) {
         bot.chat(`No recipe found for "${itemName}".`);
         logger.info(`No recipe found for "${itemName}".`);
@@ -238,7 +270,6 @@ async function craftItem(itemName) {
       }
   
       const recipe = recipes[0];
-      const needsCraftingTable = recipe.requiresTable;
   
       // Check if bot has all the required materials
       const missingItems = [];
@@ -260,23 +291,9 @@ async function craftItem(itemName) {
         return;
       }
   
-      // Locate a crafting table if needed
-      let craftingTableBlock = null;
-      if (needsCraftingTable) {
-        craftingTableBlock = getBlockCoordinates('crafting_table', 64);
+      // Craft the item using the crafting table if required
+      await bot.craft(recipe, 1, craftingTableBlock);
   
-        if (!craftingTableBlock) {
-          bot.chat("No crafting table nearby.");
-          logger.info("Crafting table not found nearby.");
-          return;
-        }
-  
-        // Move to the crafting table
-        await travelToCoordinates(craftingTableBlock.x, craftingTableBlock.y, craftingTableBlock.z);
-      }
-  
-      // Craft the item
-      await bot.craft(recipe, 1, craftingTableBlock ? bot.blockAt(craftingTableBlock) : null);
       bot.chat(`Successfully crafted "${itemName}".`);
       logger.info(`Successfully crafted "${itemName}".`);
     } catch (err) {
