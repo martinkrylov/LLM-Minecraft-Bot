@@ -65,7 +65,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = process.env.API_PORT || 5001; // Use port from .env or default to 5001
+    const PORT = process.env.API_PORT || 3000; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
