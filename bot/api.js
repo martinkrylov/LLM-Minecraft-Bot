@@ -315,6 +315,76 @@ async function followUser(username) {
   }
 }
 
+// -------------------- mineResource Function -------------------- //
+
+/**
+ * Combines finding the nearest specified block and mining it.
+ * @param {string} blockName - The name of the block to find and mine (e.g., 'stone', 'diamond_ore').
+ * @param {number} [maxDistance=64] - The maximum distance to search for the block.
+ */
+async function mineResource(blockName, maxDistance = 64) {
+  try {
+    // Find the nearest block coordinates
+    const blockPosition = getBlockCoordinates(blockName, maxDistance);
+
+    if (!blockPosition) {
+      // getBlockCoordinates already informs the user if block not found
+      return;
+    }
+
+    const { x, y, z } = blockPosition;
+
+    bot.chat(`Starting to mine "${blockName}" at (${x}, ${y}, ${z}).`);
+    logger.info(`Starting to mine "${blockName}" at (${x}, ${y}, ${z}).`);
+
+    // Mine the block
+    await mineBlockAt(x, y, z);
+
+    bot.chat(`Successfully mined "${blockName}" at (${x}, ${y}, ${z}).`);
+    logger.info(`Successfully mined "${blockName}" at (${x}, ${y}, ${z}).`);
+  } catch (err) {
+    bot.chat(`Failed to mine "${blockName}": ${err.message}`);
+    logger.error(`Failed to mine "${blockName}": ${err.message}`);
+  }
+}
+
+async function killEntity(entityType) {
+    try {
+      const targetEntity = bot.nearestEntity(entity => (entity.mobType === entityType || entity.name === entityType));
+  
+      if (!targetEntity) {
+        bot.chat(`No ${entityType} found nearby.`);
+        logger.info(`No ${entityType} found nearby.`);
+        return;
+      }
+  
+      bot.chat(`Starting to attack the nearest ${entityType}.`);
+      logger.info(`Starting to attack the nearest ${entityType} at position (${targetEntity.position.x}, ${targetEntity.position.y}, ${targetEntity.position.z})`);
+  
+      const goal = new goals.GoalFollow(targetEntity, 1);
+      bot.pathfinder.setGoal(goal, true);
+  
+      bot.on('entityGone', (entity) => {
+        if (entity === targetEntity) {
+          bot.chat(`Successfully killed the ${entityType}.`);
+          logger.info(`Successfully killed the ${entityType}.`);
+          bot.pathfinder.setGoal(null);
+        }
+      });
+  
+      const attackInterval = setInterval(() => {
+        if (targetEntity.isValid) {
+          bot.attack(targetEntity);
+        } else {
+          clearInterval(attackInterval);
+        }
+      }, 1000);
+    } catch (err) {
+      bot.chat(`Failed to attack ${entityType}: ${err.message}`);
+      logger.error(`Failed to attack ${entityType}: ${err.message}`);
+    }
+}
+
 // -------------------- Express API Endpoints -------------------- //
 
 // Test endpoint
@@ -411,6 +481,47 @@ app.post('/craft', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// -------------------- mineResource Endpoint -------------------- //
+
+// Express endpoint to mine a resource by block name
+app.post('/mine_resource', async (req, res) => {
+  const { blockName, maxDistance } = req.body;
+  if (!blockName) {
+    return res.status(400).json({ error: 'blockName is required' });
+  }
+
+  // Validate maxDistance if provided
+  let distance = 64; // Default maxDistance
+  if (maxDistance !== undefined) {
+    if (typeof maxDistance !== 'number' || maxDistance <= 0) {
+      return res.status(400).json({ error: 'maxDistance must be a positive number' });
+    }
+    distance = maxDistance;
+  }
+
+  try {
+    await mineResource(blockName.toLowerCase(), distance);
+    res.json({ message: `Attempted to mine "${blockName}" within ${distance} blocks` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API endpoint to kill an entity by type
+app.post('/kill', async (req, res) => {
+    const { entityType } = req.body;
+    if (!entityType) {
+      return res.status(400).json({ error: 'entityType is required' });
+    }
+  
+    try {
+      await killEntity(entityType.toLowerCase());
+      res.json({ message: `Attempted to kill the nearest "${entityType}"` });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
 // -------------------- End of Express API Endpoints -------------------- //
 
@@ -549,8 +660,36 @@ bot.on('chat', async (username, message) => {
         }
         break;
 
+      case 'mine_resource':
+        if (args.length >= 1) {
+          const resourceName = args[0].toLowerCase();
+          let maxDistance = 64; // Default maxDistance
+          if (args.length >= 2) {
+            const distance = parseInt(args[1], 10);
+            if (!isNaN(distance) && distance > 0) {
+              maxDistance = distance;
+            } else {
+              bot.chat('Invalid maxDistance. Using default of 64 blocks.');
+            }
+          }
+          await mineResource(resourceName, maxDistance);
+        } else {
+          bot.chat('Usage: !mine_resource <block_name> [maxDistance]');
+        }
+        break;
+
+        case 'kill':
+            if (args.length === 1) {
+              const entityType = args[0].toLowerCase();
+              await killEntity(entityType);
+            } else {
+              bot.chat(args.length);
+              bot.chat('Usage: !kill <entity_type>');
+            }
+            break;
+
       case 'help':
-        bot.chat('Available commands:\n!craft <item_name>\n!travel <x> <y> <z>\n!mine <x> <y> <z>\n!drop <item_name>\n!place <block_name> <x> <y> <z>\n!come_to_me\n!get_block_coords <block_name>\n!stop_mine');
+        bot.chat('Available commands:\n!craft <item_name>\n!travel <x> <y> <z>\n!mine <x> <y> <z>\n!drop <item_name>\n!place <block_name> <x> <y> <z>\n!come_to_me\n!get_block_coords <block_name>\n!mine_resource <block_name> [maxDistance]\n!stop_mine');
         break;
 
       case 'stop_mine':
