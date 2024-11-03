@@ -15,7 +15,7 @@ def move_to(bot, x, y, z, movements, pathfinder):
     bot.chat(f"Moving to coordinates ({x}, {y}, {z})")
 
 def mine_spot(bot, x, y, z, movements, pathfinder):
-    
+    move_to(bot, x, y, z, movements, pathfinder)
 
 
 # Place a block at specific coordinates with improved error handling

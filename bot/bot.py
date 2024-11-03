@@ -1,59 +1,51 @@
-from javascript import require, On, Once, AsyncTask, once, off
-import actions
+import requests
 
-mineflayer = require("mineflayer")
-Vec3 = require('vec3').Vec3
+class MineflayerBotWrapper:
+    def __init__(self, api_url='http://localhost:3000'):
+        self.api_url = api_url
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
 
-BOT_USERNAME = "skibidi-gyatt"
-HOST = "localhost"
-PORT = 7754
-VERSION = "1.19.4"
+    def health_check(self):
+        try:
+            response = requests.get(f"{self.api_url}/health", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Health check failed: {e}")
+            return None
 
-bot = mineflayer.createBot(
-    {"username": BOT_USERNAME, "host": HOST, "port": PORT, "version": VERSION, "hideErrors": False}
-)
+    def travel_to(self, x, y, z):
+        payload = {'x': x, 'y': y, 'z': z}
+        try:
+            print('payload:', payload)
+            response = requests.post(f"{self.api_url}/travel", json=payload, headers=self.headers)
+            print("WE DID IT!!!")
+            print(response)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Travel command failed: {e}")
+            return None
 
-pathfinder = require('mineflayer-pathfinder')
-bot.loadPlugin(pathfinder.pathfinder)
+    def mine_block(self, x, y, z):
+        payload = {'x': x, 'y': y, 'z': z}
+        try:
+            response = requests.post(f"{self.api_url}/mine", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Mine command failed: {e}")
+            return None
 
-mcData = require('minecraft-data')(bot.version)
-
-movements = pathfinder.Movements(bot, mcData)
-
-RANGE_GOAL = 1
-
-@On(bot, "login")
-def login(this):
-    bot.chat("Hi guys! My name is Skib! Let me know what you want me to do!")
-    
-    actions.move_to(bot, 100, 103, -260, movements, pathfinder)
-    moo = bot.entity.position
-    moot = type(moo)
-    choo = Vec3(100, 102, -260)
-    choot = type(choo)
-
-    bot.chat(f"{moo} \n {moot} \n {choo} \n {choot}")
-    target_block = bot.blockAt(choo)
-    bot.chat(f"TARGET BLOCK {target_block} DIGGABLE: {bot.canDigBlock(target_block)}")
-    actions.mine_spot(bot, 94, 102, -258, movements, pathfinder)
-
-
-@On(bot, 'chat')
-def breakListener(this, sender, message, *args):
-  if sender and (sender != BOT_USERNAME):
-    if message == "come":
-       actions.action_responses['come'](bot, sender, message, pathfinder, movements)
-    elif message == "break":
-       actions.action_responses['break'](bot)
-
-"""
-@On(bot, 'chat')
-def handleMsg(this, sender, message, *args):
-    if sender and (sender != BOT_USERNAME):
-        bot.chat('Hi, you said ' + message)
-        # Call the appropriate function from action_responses if it exists
-        if message in actions.action_responses:
-            actions.action_responses[message](sender, message, *args)
-        else:
-            bot.chat("I don't understand that command!")
-"""
+    def craft_item(self, item_name):
+        payload = {'itemName': item_name}
+        try:
+            response = requests.post(f"{self.api_url}/craft", json=payload, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Craft command failed: {e}")
+            return None
