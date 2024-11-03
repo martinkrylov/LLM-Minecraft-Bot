@@ -90,7 +90,7 @@ function mineBlockAt(x, y, z) {
       // Define the offset
       const offsetX = -1;
       const offsetY = 0;
-      const offsetZ = 1;
+      const offsetZ = 0;
       const targetX = x + offsetX;
       const targetY = y + offsetY;
       const targetZ = z + offsetZ;
