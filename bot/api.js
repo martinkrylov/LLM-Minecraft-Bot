@@ -214,42 +214,77 @@ function placeBlockAt(blockName, x, y, z) {
   });
 }
 
-// Function to craft an item using Mineflayer's built-in crafting
-function craftItem(itemName) {
-  return new Promise(async (resolve, reject) => {
+async function craftItem(itemName) {
     try {
-      // Ensure mcData is available
+      // Ensure mcData is available and load item information
       if (!mcData) {
-        return reject(new Error('Minecraft data not loaded'));
+        bot.chat("Minecraft data not loaded.");
+        return;
       }
-
-      const item = mcData.itemsByName[itemName];
-      if (!item) {
-        return reject(new Error(`Item "${itemName}" does not exist`));
+  
+      const itemId = mcData.itemsByName[itemName]?.id;
+      if (!itemId) {
+        bot.chat(`Item "${itemName}" does not exist.`);
+        logger.info(`Attempted to craft "${itemName}", but it does not exist.`);
+        return;
       }
-
-      const itemId = item.id;
-
-      // Get all possible recipes for the item
-      const recipes = bot.recipesFor(itemId, null, 1, null);
-
+  
+      // Check if a crafting table is required for the recipe
+      const recipes = bot.recipesFor(itemId, null, 1);
       if (recipes.length === 0) {
-        return reject(new Error(`No recipe found for "${itemName}"`));
+        bot.chat(`No recipe found for "${itemName}".`);
+        logger.info(`No recipe found for "${itemName}".`);
+        return;
       }
-
-      const recipe = recipes[0]; // Choose the first available recipe
-
-      // Attempt to craft the item
-      await bot.craft(recipe, 1);
-      logger.info(`Successfully crafted "${itemName}"`);
-      resolve();
+  
+      const recipe = recipes[0];
+      const needsCraftingTable = recipe.requiresTable;
+  
+      // Check if bot has all the required materials
+      const missingItems = [];
+      for (const ingredient of recipe.delta) {
+        if (ingredient.count < 0) {
+          const requiredItem = mcData.items[ingredient.id];
+          const requiredCount = -ingredient.count;
+          const inventoryCount = bot.inventory.count(ingredient.id, null);
+  
+          if (inventoryCount < requiredCount) {
+            missingItems.push(`${requiredCount - inventoryCount}x ${requiredItem.name}`);
+          }
+        }
+      }
+  
+      if (missingItems.length > 0) {
+        bot.chat(`Missing materials: ${missingItems.join(', ')}`);
+        logger.info(`Missing materials to craft "${itemName}": ${missingItems.join(', ')}`);
+        return;
+      }
+  
+      // Locate a crafting table if needed
+      let craftingTableBlock = null;
+      if (needsCraftingTable) {
+        craftingTableBlock = getBlockCoordinates('crafting_table', 64);
+  
+        if (!craftingTableBlock) {
+          bot.chat("No crafting table nearby.");
+          logger.info("Crafting table not found nearby.");
+          return;
+        }
+  
+        // Move to the crafting table
+        await travelToCoordinates(craftingTableBlock.x, craftingTableBlock.y, craftingTableBlock.z);
+      }
+  
+      // Craft the item
+      await bot.craft(recipe, 1, craftingTableBlock ? bot.blockAt(craftingTableBlock) : null);
+      bot.chat(`Successfully crafted "${itemName}".`);
+      logger.info(`Successfully crafted "${itemName}".`);
     } catch (err) {
-      logger.error(`Error while crafting "${itemName}": ${err.message}`);
-      reject(err);
+      bot.chat(`Failed to craft "${itemName}": ${err.message}`);
+      logger.error(`Failed to craft "${itemName}": ${err.message}`);
     }
-  });
-}
-
+  }
+  
 // Function to find the nearest block and return its coordinates
 /**
  * Finds the nearest block of the specified type within a given range.
@@ -382,6 +417,51 @@ async function killEntity(entityType) {
     }
 }
 
+async function placeBlock(blockName, x, y, z) {
+    try {
+      // Check if the bot has the specified block in its inventory
+      const blockItem = bot.inventory.items().find(item => item.name === blockName);
+  
+      if (!blockItem) {
+        bot.chat(`I don't have any ${blockName}.`);
+        logger.info(`Attempted to place ${blockName}, but it was not found in inventory.`);
+        return;
+      }
+  
+      // Move to a position close to the target coordinates using the existing travel function
+      const targetPosition = { x: x-1, y: y - 1, z: z }; // Adjust y so it can place on the ground level
+      await travelToCoordinates(targetPosition.x, targetPosition.y, targetPosition.z);
+  
+      // Check if there's a block in the target position and mine it if necessary
+      const targetBlock = bot.blockAt(new Vec3(x, y, z));
+      if (targetBlock && targetBlock.name !== 'air') {
+        bot.chat(`Clearing space by mining existing ${targetBlock.name} at (${x}, ${y}, ${z}).`);
+        logger.info(`Clearing space by mining existing ${targetBlock.name} at (${x}, ${y}, ${z}).`);
+        await bot.dig(targetBlock);
+      }
+  
+      // Equip the block in hand
+      await bot.equip(blockItem, 'hand');
+  
+      // Reference block to place against (the block at the specified position's y-1 level)
+      const referenceBlock = bot.blockAt(new Vec3(x, y - 1, z));
+      
+      if (!referenceBlock) {
+        bot.chat(`No block to place ${blockName} against at (${x}, ${y - 1}, ${z}).`);
+        logger.info(`No block found at (${x}, ${y - 1}, ${z}) to place ${blockName} against.`);
+        return;
+      }
+  
+      // Place the block against the reference block
+      await bot.placeBlock(referenceBlock, new Vec3(0, 1, 0)); // Adjust face vector as needed for placement direction
+      bot.chat(`Successfully placed ${blockName} at (${x}, ${y}, ${z}).`);
+      logger.info(`Placed ${blockName} at (${x}, ${y}, ${z}).`);
+    } catch (err) {
+      bot.chat(`Failed to place ${blockName}: ${err.message}`);
+      logger.error(`Failed to place ${blockName} at (${x}, ${y}, ${z}): ${err.message}`);
+    }
+  }
+  
 // -------------------- Express API Endpoints -------------------- //
 
 // Test endpoint
@@ -520,6 +600,20 @@ app.post('/kill', async (req, res) => {
     }
   });
 
+  app.post('/place_block', async (req, res) => {
+    const { blockName, x, y, z } = req.body;
+    if (!blockName || typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+      return res.status(400).json({ error: 'blockName, x, y, and z are required' });
+    }
+  
+    try {
+      await placeBlock(blockName.toLowerCase(), x, y, z);
+      res.json({ message: `Attempted to place "${blockName}" at (${x}, ${y}, ${z})` });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
 // -------------------- End of Express API Endpoints -------------------- //
 
 
@@ -611,28 +705,22 @@ bot.on('chat', async (username, message) => {
         }
         break;
 
-      case 'place':
-        if (args.length === 4) {
-          const [blockName, px, py, pz] = args;
-          const placeX = parseInt(px, 10);
-          const placeY = parseInt(py, 10);
-          const placeZ = parseInt(pz, 10);
-          if (!isNaN(placeX) && !isNaN(placeY) && !isNaN(placeZ)) {
-            try {
-              await placeBlockAt(blockName.toLowerCase(), placeX, placeY, placeZ);
-              bot.chat(`Placed "${blockName}" at (${placeX}, ${placeY}, ${placeZ})`);
-              logger.info(`Placed "${blockName}" at (${placeX}, ${placeY}, ${placeZ})`);
-            } catch (err) {
-              bot.chat(`Failed to place block "${blockName}" at (${placeX}, ${placeY}, ${placeZ}): ${err.message}`);
-              logger.error(`Failed to place block "${blockName}" at (${placeX}, ${placeY}, ${placeZ}): ${err.message}`);
+        case 'place':
+            if (args.length === 4) {
+              const blockName = args[0].toLowerCase();
+              const x = parseInt(args[1]);
+              const y = parseInt(args[2]);
+              const z = parseInt(args[3]);
+      
+              if (isNaN(x) || isNaN(y) || isNaN(z)) {
+                bot.chat('Usage: place <block_name> <x> <y> <z>');
+              } else {
+                await placeBlock(blockName, x, y, z);
+              }
+            } else {
+              bot.chat('Usage: place <block_name> <x> <y> <z>');
             }
-          } else {
-            bot.chat('Invalid coordinates. Usage: !place <block_name> <x> <y> <z>');
-          }
-        } else {
-          bot.chat('Please provide block name and coordinates. Usage: !place <block_name> <x> <y> <z>');
-        }
-        break;
+            break;
 
       case 'come_to_me':
         // Implement the followUser function
