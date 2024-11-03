@@ -368,6 +368,39 @@ function craftItem(itemName) {
   });
 }
 
+/**
+ * Finds the nearest block of the specified type within a given range.
+ * @param {string} blockName - The name of the block to find (e.g., 'stone', 'dirt').
+ * @param {number} [maxDistance=64] - The maximum distance to search for the block.
+ * @returns {Vec3|null} - The position of the found block or null if not found.
+ */
+function getBlockCoordinates(blockName, maxDistance = 64) {
+    // Load Minecraft data based on the bot's version
+    const mcData = require('minecraft-data')(bot.version);
+    
+    // Get the block ID from the block name
+    const blockId = mcData.blocksByName[blockName]?.id;
+    
+    if (blockId === undefined) {
+      // Block name is invalid
+      return null;
+    }
+    
+    // Use bot.findBlock to locate the nearest block
+    const block = bot.findBlock({
+      matching: blockId,
+      maxDistance: maxDistance,
+      count: 1, // Find only one block
+    });
+    
+    if (block) {
+      return block.position;
+    } else {
+      // Block not found within the specified range
+      return null;
+    }
+  }
+
 // -------------------- Express API Endpoints -------------------- //
 
 /**
