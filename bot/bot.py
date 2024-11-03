@@ -33,6 +33,7 @@ class MineflayerBotWrapper:
     def mine_block(self, x, y, z):
         payload = {'x': x, 'y': y, 'z': z}
         try:
+            print('mine payload:', payload)
             response = requests.post(f"{self.api_url}/mine", json=payload, headers=self.headers)
             response.raise_for_status()
             return response.json()

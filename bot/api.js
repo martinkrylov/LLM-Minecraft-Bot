@@ -17,7 +17,7 @@ let mcData;
 // Create the bot with updated username and port
 bot = mineflayer.createBot({
   host: 'localhost',        // Replace with your server IP if different
-  port: 7754,               // Updated server port
+  port: 12345,               // Updated server port
   username: 'Skibidii-Gyatt', // Updated bot username
   // Additional options can be added here if needed
 });
@@ -83,29 +83,46 @@ function travelToCoordinates(x, y, z) {
 }
 
 // Function to mine a block at specific coordinates
+// Function to mine a block at specific coordinates
 function mineBlockAt(x, y, z) {
-  return new Promise((resolve, reject) => {
-    const targetBlock = bot.blockAt(new Vec3(x, y, z));
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Define the offset
+      const offsetX = -1;
+      const offsetY = 0;
+      const offsetZ = 1;
+      const targetX = x + offsetX;
+      const targetY = y + offsetY;
+      const targetZ = z + offsetZ;
 
-    if (!targetBlock) {
-      return reject(new Error(`No block found at (${x}, ${y}, ${z})`));
+      // Move to the offset position using the existing travelToCoordinates function
+      await travelToCoordinates(targetX, targetY, targetZ);
+
+      // Now attempt to mine the block at (x, y, z)
+      const targetBlock = bot.blockAt(new Vec3(x, y, z));
+
+      if (!targetBlock) {
+        return reject(new Error(`No block found at (${x}, ${y}, ${z})`));
+      }
+
+      if (!bot.canDigBlock(targetBlock)) {
+        return reject(new Error(`Cannot dig block at (${x}, ${y}, ${z})`));
+      }
+
+      // Optionally, look at the block before mining
+      await bot.lookAt(targetBlock.position, true);
+
+      // Start mining the block
+      await bot.dig(targetBlock);
+      console.log(`Successfully mined block at (${x}, ${y}, ${z})`);
+      resolve();
+    } catch (err) {
+      console.log(`Error while mining: ${err.message}`);
+      reject(err);
     }
-
-    if (!bot.canDigBlock(targetBlock)) {
-      return reject(new Error(`Cannot dig block at (${x}, ${y}, ${z})`));
-    }
-
-    bot.dig(targetBlock)
-      .then(() => {
-        console.log(`Successfully mined block at (${x}, ${y}, ${z})`);
-        resolve();
-      })
-      .catch((err) => {
-        console.log(`Error while mining: ${err.message}`);
-        reject(err);
-      });
   });
 }
+
 
 // Function to use a block like a crafting table
 function useBlockAt(x, y, z) {
