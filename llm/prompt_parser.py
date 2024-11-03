@@ -8,10 +8,10 @@ from llm.prompts import parser_prompt
 dotenv.load_dotenv()
 client = OpenAI()
 
-def parse_prompt(prompt):
+def parse_prompt(prompt, state_data):
     # Message
     messages = [
-        {"role": "system", "content": parser_prompt},
+        {"role": "system", "content": parser_prompt + str(state_data)},
         {"role": "user", "content": prompt}
     ]
     # Call the OpenAI API

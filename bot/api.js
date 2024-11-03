@@ -469,6 +469,26 @@ app.get('/', (req, res) => {
   res.send('Minecraft Bot API is running');
 });
 
+// New endpoint to get state data
+app.get('/state_data', (req, res) => {
+  const stateData = {
+    botName: bot.username,
+    position: {
+      x: bot.entity.position.x,
+      y: bot.entity.position.y,
+      z: bot.entity.position.z
+    },
+    health: bot.health,
+    inventory: bot.inventory.items().map(item => ({
+      name: item.name,
+      count: item.count,
+      slot: item.slot
+    })),
+    // Add more state data as needed
+  };
+  res.json(stateData);
+});
+
 // Travel to coordinates
 app.post('/travel', async (req, res) => {
   const { x, y, z } = req.body;

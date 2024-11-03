@@ -117,3 +117,12 @@ class MineflayerBotWrapper:
         except requests.RequestException as e:
             print(f"Kill entity command failed: {e}")
             return None
+
+    def get_state_data(self):
+        try:
+            response = requests.get(f"{self.api_url}/state_data", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Get state data command failed: {e}")
+            return None

@@ -8,10 +8,10 @@ from llm.prompts import compiler_prompt
 dotenv.load_dotenv()
 client = OpenAI()
 
-def translate_command_to_instructions(user_command):
+def translate_command_to_instructions(user_command, state_data):
     # Message
     messages = [
-        {"role": "system", "content": compiler_prompt},
+        {"role": "system", "content": compiler_prompt+str(state_data)},
         {"role": "user", "content": user_command}
     ]
     # Call the OpenAI API
@@ -20,6 +20,7 @@ def translate_command_to_instructions(user_command):
         messages=messages,
         max_tokens=200,
         temperature=0.7,
+        response_format={"type": "json_object"},
     )
 
     # Get the assistant's reply
