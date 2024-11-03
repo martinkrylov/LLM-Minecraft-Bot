@@ -43,3 +43,6 @@ if __name__ == "__main__":
         
         print(task, instructions)
         print()
+
+        for instruction in instructions:
+            bot.execute_instruction(instruction)

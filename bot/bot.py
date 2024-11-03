@@ -1,7 +1,7 @@
 import requests
 
 class MineflayerBotWrapper:
-    def __init__(self, api_url='http://localhost:3000'):
+    def __init__(self, api_url='http://localhost:5001'):
         self.api_url = api_url
         self.headers = {
             'Content-Type': 'application/json',
@@ -126,3 +126,28 @@ class MineflayerBotWrapper:
         except requests.RequestException as e:
             print(f"Get state data command failed: {e}")
             return None
+        
+    def execute_instruction(self, instruction):
+        method = instruction['method']
+        params = instruction['parameters']
+        
+        if method == 'travel_to':
+            self.travel_to(params['x'], params['y'], params['z'])
+        elif method == 'mine_block':
+            self.mine_block(params['x'], params['y'], params['z'])
+        elif method == 'craft_item':
+            self.craft_item(params['item_name']) 
+        elif method == 'use_block':
+            self.use_block(params['x'], params['y'], params['z'])
+        elif method == 'drop_item':
+            self.drop_item(params['item_name'])
+        elif method == 'place_block':
+            self.place_block(params['block_name'], params['x'], params['y'], params['z'])
+        elif method == 'place_block_at':
+            self.place_block_at(params['block_name'], params['x'], params['y'], params['z'])
+        elif method == 'mine_resource':
+            self.mine_resource(params['block_name'], params['max_distance'])
+        elif method == 'kill_entity':
+            self.kill_entity(params['entity_type']) 
+        else:
+            print(f"Unknown method: {method}")

@@ -34,7 +34,7 @@ const authorizedUsers = ['Magic_karp24', 'martin874183']; // Replace with your M
 
 // Create the bot with updated username and port
 bot = mineflayer.createBot({
-  host: '11.20.16.131',             // Replace with your server IP if different
+  host: 'localhost',             // Replace with your server IP if different
   port: 7754,                    // Updated server port
   username: 'Skibidii-Gyatt',    // Updated bot username
   // Additional options can be added here if needed
