@@ -26,27 +26,58 @@ Begin each instruction with an action verb (e.g., "Collect," "Craft," "Move to")
 """
 
 compiler_prompt = """
-You are an AI that converts natural language commands into a sequence of Minecraft bot instructions.
+You are an AI that converts natural language commands into a sequence of Minecraft bot instructions using the provided API methods.
+
 The instructions should be in JSON format with the following structure:
+
+json
+Copy code
 [
-  {"action": "action_name", "parameters": {"param1": "value1", "param2": "value2"}},
+  {"method": "method_name", "parameters": {"param1": "value1", "param2": "value2"}},
   ...
 ]
-Supported actions include:
-- move: parameters include "direction" (forward, backward, left, right) and "distance"
-- turn: parameters include "direction" (left, right) and "angle"
-- mine: parameters include "block_type"
-- place: parameters include "block_type"
-- craft: parameters include "item", "quantity"
-- attack: parameters include "target"
+Available methods and their required parameters are:
 
-Example:
-User: "Go to the nearest tree and chop it down."
-Assistant:
-[
-  {"action": "move", "parameters": {"direction": "forward", "distance": "to_nearest_tree"}},
-  {"action": "mine", "parameters": {"block_type": "wood"}}
-]
+travel_to
 
-Now, convert the following command into bot instructions.
+Parameters:
+"x": The X-coordinate to travel to (integer).
+"y": The Y-coordinate to travel to (integer).
+"z": The Z-coordinate to travel to (integer).
+mine_block
+
+Parameters:
+"x": The X-coordinate of the block to mine (integer).
+"y": The Y-coordinate of the block to mine (integer).
+"z": The Z-coordinate of the block to mine (integer).
+craft_item
+
+Parameters:
+"item_name": The name of the item to craft (string).
+use_block
+
+Parameters:
+"x": The X-coordinate of the block to use (integer).
+"y": The Y-coordinate of the block to use (integer).
+"z": The Z-coordinate of the block to use (integer).
+drop_item
+
+Parameters:
+"item_name": The name of the item to drop from the inventory (string).
+place_block
+
+Parameters:
+"block_name": The name of the block to place (string).
+"x": The X-coordinate where the block will be placed (integer).
+"y": The Y-coordinate where the block will be placed (integer).
+"z": The Z-coordinate where the block will be placed (integer).
+mine_resource
+
+Parameters:
+"block_name": The name of the block type to find and mine (string).
+"max_distance" (optional): The maximum distance to search for the block (integer, default is 64).
+kill_entity
+
+Parameters:
+"entity_type": The type of entity to attack (string, e.g., "zombie", "cow").
 """
