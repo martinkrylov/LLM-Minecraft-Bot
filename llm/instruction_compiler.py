@@ -18,16 +18,17 @@ def translate_command_to_instructions(user_command, state_data):
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL"),
         messages=messages,
-        max_tokens=200,
+        max_tokens=400,
         temperature=0.7,
         response_format={"type": "json_object"},
     )
 
     # Get the assistant's reply
-    assistant_reply = extract_json_from_string(response.choices[0].message.content)
+    
+    assistant_reply = json.loads(response.choices[0].message.content)
     # Attempt to parse the reply as JSON
     try:
-        instructions = json.loads(assistant_reply)
+        instructions = (assistant_reply)['instructions']
         return instructions
     except json.JSONDecodeError:
         print("Failed to parse the assistant's reply as JSON.")

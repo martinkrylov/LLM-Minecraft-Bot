@@ -6,7 +6,7 @@ from bot.bot import MineflayerBotWrapper
 if __name__ == "__main__":
     bot = MineflayerBotWrapper()
     
-    user_command = "Make an wooden pickaxe."
+    user_command = "Place the crafting table."
 
     state_data = bot.get_state_data()
     print(state_data)
@@ -25,11 +25,12 @@ if __name__ == "__main__":
                 raise
     print(tasks)
     print('--------------------------------')
-    for task in tasks:
+    for task_object in tasks['tasks']:
+        task = task_object['task']
         state_data = bot.get_state_data()
         
         # Attempt to translate command to instructions multiple times
-        for attempt in range(3):  # Try 3 times
+        for attempt in range(15):  # Try 3 times
             try:
                 instructions = translate_command_to_instructions(task, state_data)
                 if instructions is None:  # Check if instructions is None
@@ -38,11 +39,12 @@ if __name__ == "__main__":
                 break  # Exit loop if successful
             except Exception as e:
                 print(f"Attempt {attempt + 1} failed: {e}")
-                if attempt == 2:  # If it's the last attempt, raise the error
+                if attempt == 14:  # If it's the last attempt, raise the error
                     raise
         
         print(task, instructions)
         print()
 
         for instruction in instructions:
+            print("instruction: ", instruction)
             bot.execute_instruction(instruction)

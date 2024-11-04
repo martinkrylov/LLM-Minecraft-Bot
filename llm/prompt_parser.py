@@ -18,12 +18,13 @@ def parse_prompt(prompt, state_data):
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL"),
         messages=messages,
-        max_tokens=200,
+        max_tokens=400,
         temperature=0.7,
+        response_format={"type": "json_object"},
     )
 
     # Access the content of the message
-    assistant_reply_content = extract_json_from_string(response.choices[0].message.content)
+    assistant_reply_content = (response.choices[0].message.content)
     # Attempt to parse the reply as JSON
     try:
         instructions = json.loads(assistant_reply_content)

@@ -146,7 +146,7 @@ class MineflayerBotWrapper:
         elif method == 'place_block_at':
             self.place_block_at(params['block_name'], params['x'], params['y'], params['z'])
         elif method == 'mine_resource':
-            self.mine_resource(params['block_name'], params['max_distance'])
+            self.mine_resource(params['block_name'], params.get('max_distance', 64))
         elif method == 'kill_entity':
             self.kill_entity(params['entity_type']) 
         else:

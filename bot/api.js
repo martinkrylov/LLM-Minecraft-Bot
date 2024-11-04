@@ -36,7 +36,7 @@ const authorizedUsers = ['Magic_karp24', 'martin874183']; // Replace with your M
 bot = mineflayer.createBot({
   host: 'localhost',             // Replace with your server IP if different
   port: 7754,                    // Updated server port
-  username: 'Skibidii-Gyatt',    // Updated bot username
+  username: 'BlockBot',    // Updated bot username
   // Additional options can be added here if needed
 });
 
@@ -62,7 +62,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = 3000//process.env.PORT || 5001; // Use port from .env or default to 5001
+    const PORT = 5001//process.env.PORT || 5001; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
@@ -108,7 +108,7 @@ function mineBlockAt(x, y, z) {
     try {
       // Define the offset (you can adjust this as needed)
       const offsetX = -1;
-      const offsetY = 0;
+      const offsetY = -1;
       const offsetZ = 0;
       const targetX = x + offsetX;
       const targetY = y + offsetY;
