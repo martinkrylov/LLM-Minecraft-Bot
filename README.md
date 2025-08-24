@@ -86,4 +86,12 @@ License
 
 MIT
 
+Built With
+----------
+
+- Node.js 18+
+- Mineflayer, mineflayer-pathfinder
+- Express, winston
+- Python 3.10+, requests, python-dotenv, openai SDK
+
 
