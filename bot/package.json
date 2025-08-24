@@ -1,8 +1,21 @@
 {
+  "name": "minecraft-llm-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express API controlling a Mineflayer bot for LLM planning/actuation",
+  "scripts": {
+    "start": "node api.js",
+    "dev": "PORT=5001 node api.js",
+    "lint": "echo 'No JS linter configured'"
+  },
   "dependencies": {
     "express": "^4.21.1",
+    "express-rate-limit": "^7.4.0",
     "mineflayer": "^4.23.0",
     "mineflayer-pathfinder": "^2.4.5",
     "winston": "^3.16.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
