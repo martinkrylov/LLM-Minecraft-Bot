@@ -3,6 +3,7 @@ const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const Vec3 = require('vec3');
 const mcDataLoader = require('minecraft-data');
 const express = require('express');
+const rateLimit = require('express-rate-limit'); // For rate limiting
 const app = express();
 
 const winston = require('winston'); // For logging
@@ -24,6 +25,27 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'bot.log' }) // Log to file
   ],
 });
+
+// -------------------- Optional API Key Authentication -------------------- //
+const API_KEY = process.env.API_KEY;
+if (API_KEY) {
+  app.use((req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey && apiKey === API_KEY) {
+      return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+  });
+}
+
+// -------------------- Basic Rate Limiting -------------------- //
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 
 // Variables to store bot and mcData
 let bot;
@@ -62,7 +84,7 @@ bot.once('spawn', async () => {
     logger.info('Pathfinder movements set');
 
     // Start the Express server after the bot is ready
-    const PORT = 5001//process.env.PORT || 5001; // Use port from .env or default to 5001
+    const PORT = process.env.PORT || 5001; // Use port from .env or default to 5001
     app.listen(PORT, () => {
       logger.info(`Express server is running on port ${PORT}`);
     });
@@ -484,6 +506,25 @@ async function placeBlock(blockName, x, y, z) {
 // Test endpoint
 app.get('/', (req, res) => {
   res.send('Minecraft Bot API is running');
+});
+
+// Health/Status endpoints for monitoring
+app.get('/status', (req, res) => {
+  try {
+    const ready = Boolean(bot && bot.username && mcData);
+    res.json({ status: ready ? 'ready' : 'not_ready', bot: bot?.username || null });
+  } catch (e) {
+    res.json({ status: 'not_ready' });
+  }
+});
+
+app.get('/health', (req, res) => {
+  try {
+    const ready = Boolean(bot && bot.username && mcData);
+    res.json({ status: ready ? 'ready' : 'not_ready', bot: bot?.username || null });
+  } catch (e) {
+    res.json({ status: 'not_ready' });
+  }
 });
 
 // New endpoint to get state data
