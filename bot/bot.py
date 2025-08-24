@@ -1,12 +1,18 @@
+import os
 import requests
 
 class MineflayerBotWrapper:
-    def __init__(self, api_url='http://localhost:5001'):
-        self.api_url = api_url
-        self.headers = {
+    def __init__(self, api_url: str | None = None, api_key: str | None = None):
+        base_url = api_url or os.getenv('MINECRAFT_API_URL', 'http://localhost:5001')
+        self.api_url = base_url.rstrip('/')
+        api_key = api_key or os.getenv('API_KEY')
+        headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
+        if api_key:
+            headers['x-api-key'] = api_key
+        self.headers = headers
 
     def health_check(self):
         try:
