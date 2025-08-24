@@ -282,9 +282,9 @@ bot.on('chat', async (username, message) => {
   const args = message.slice(COMMAND_PREFIX.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
 
-  // Handle the "cum" command (move to player)
-  if (command === 'cum') {
-    console.log(`Received command "cum" from ${username}`);
+  // Handle the "come" command (move to player)
+  if (command === 'come') {
+    console.log(`Received command "come" from ${username}`);
 
     const player = bot.players[username];
 
@@ -298,7 +298,7 @@ bot.on('chat', async (username, message) => {
     // Move the bot to the player's position
     travelToCoordinates(targetPos.x, targetPos.y, targetPos.z)
       .then(() => {
-        bot.chat(`Here I am, ${username}!`);
+        bot.chat(`Coming to you, ${username}!`);
       })
       .catch((err) => {
         bot.chat(`Sorry, I couldn't reach you, ${username}.`);
@@ -338,19 +338,19 @@ bot.on('chat', async (username, message) => {
   // You can add more commands here following the same pattern
 
   // If the command is not recognized
-  bot.chat(`Unknown command: "${command}". Available commands: cum, craft`);
+  bot.chat(`Unknown command: "${command}". Available commands: come, craft`);
 });
 
-// -------------------- Additional Chat Listener for "cum" Without Prefix -------------------- //
+// -------------------- Additional Chat Listener for "come" Without Prefix -------------------- //
 
-// If you still want to respond to "cum" without a prefix
+// If you still want to respond to "come" without a prefix
 bot.on('chat', (username, message) => {
   // Ignore messages from the bot itself
   if (username === bot.username) return;
 
-  // Check if the message is exactly "cum" (case-insensitive)
-  if (message.toLowerCase() === 'cum') {
-    console.log(`Received trigger "cum" from ${username}`);
+  // Check if the message is exactly "come" (case-insensitive)
+  if (message.toLowerCase() === 'come') {
+    console.log(`Received trigger "come" from ${username}`);
 
     const player = bot.players[username];
 
@@ -364,7 +364,7 @@ bot.on('chat', (username, message) => {
     // Move the bot to the player's position
     travelToCoordinates(targetPos.x, targetPos.y, targetPos.z)
       .then(() => {
-        bot.chat(`Here I am, ${username}!`);
+        bot.chat(`Coming to you, ${username}!`);
       })
       .catch((err) => {
         bot.chat(`Sorry, I couldn't reach you, ${username}.`);
